@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anim – ASCII Animation Creator</title>
+</head>
+<body>
+  <h1>Anim – ASCII Animation Creator</h1>
+
+  <!-- Frame Navigation and Management -->
+  <div>
+    <button id="prevFrame">Previous Frame</button>
+    <button id="nextFrame">Next Frame</button>
+    <button id="addFrame">Add Frame</button>
+    <button id="copyFrame">Copy Frame</button>
+    <button id="deleteFrame">Delete Frame</button>
+    <button id="clearFrames">Clear All Frames</button>
+    <span id="frameInfo">Frame 1/1</span>
+  </div>
+
+  <!-- ASCII Frame Editor -->
+  <div>
+    <textarea id="frameEditor" rows="10" cols="50"></textarea>
+  </div>
+
+  <!-- Current Frame Display -->
+  <pre id="frameDisplay"></pre>
+
+  <!-- Animation Controls -->
+  <div>
+    <button id="play">Play</button>
+    <button id="stop">Stop</button>
+    <label>Speed (fps): <input type="number" id="speed" value="2" min="1" max="60"></label>
+  </div>
+
+  <!-- Export Options -->
+  <div>
+    <button id="exportJSON">Export as JSON</button>
+    <button id="downloadTXT">Download as .txt</button>
+  </div>
+
+  <script>
+    // Initialize variables
+    let frames = [''];
+    let currentFrame = 0;
+    let playing = false;
+    let interval;
+
+    const frameEditor = document.getElementById('frameEditor');
+    const frameDisplay = document.getElementById('frameDisplay');
+    const frameInfo = document.getElementById('frameInfo');
+    const speedInput = document.getElementById('speed');
+
+    // Update display
+    function updateDisplay() {
+      frameDisplay.textContent = frames[currentFrame];
+      frameEditor.value = frames[currentFrame];
+      frameInfo.textContent = '>> Frame ' + (currentFrame + 1) + ' << / ' + frames.length;
+    }
+
+    // Navigation
+    document.getElementById('nextFrame').addEventListener('click', () => {
+      if (currentFrame < frames.length - 1) currentFrame++;
+      updateDisplay();
+    });
+
+    document.getElementById('prevFrame').addEventListener('click', () => {
+      if (currentFrame > 0) currentFrame--;
+      updateDisplay();
+    });
+
+    // Frame management
+    document.getElementById('addFrame').addEventListener('click', () => {
+      frames.push('');
+      currentFrame = frames.length - 1;
+      updateDisplay();
+    });
+
+    document.getElementById('copyFrame').addEventListener('click', () => {
+      frames.splice(currentFrame + 1, 0, frames[currentFrame]);
+      currentFrame++;
+      updateDisplay();
+    });
+
+    document.getElementById('deleteFrame').addEventListener('click', () => {
+      if (frames.length > 1) {
+        frames.splice(currentFrame, 1);
+        if (currentFrame >= frames.length) currentFrame = frames.length - 1;
+        updateDisplay();
+      } else {
+        frames[0] = '';
+        updateDisplay();
+      }
+    });
+
+    document.getElementById('clearFrames').addEventListener('click', () => {
+      frames = [''];
+      currentFrame = 0;
+      updateDisplay();
+    });
+
+    // Editing frame
+    frameEditor.addEventListener('input', () => {
+      frames[currentFrame] = frameEditor.value;
+      updateDisplay();
+    });
+
+    // Animation playback
+    document.getElementById('play').addEventListener('click', () => {
+      if (!playing) {
+        playing = true;
+        let fps = parseInt(speedInput.value) || 2;
+        interval = setInterval(() => {
+          currentFrame = (currentFrame + 1) % frames.length;
+          updateDisplay();
+        }, 1000 / fps);
+      }
+    });
+
+    document.getElementById('stop').addEventListener('click', () => {
+      playing = false;
+      clearInterval(interval);
+    });
+
+    // Export animation
+    document.getElementById('exportJSON').addEventListener('click', () => {
+      const json = JSON.stringify(frames, null, 2);
+      navigator.clipboard.writeText(json);
+      alert('Animation copied as JSON!');
+    });
+
+    document.getElementById('downloadTXT').addEventListener('click', () => {
+      const text = frames.join('\n--- Frame ---\n');
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'animation.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName !== 'TEXTAREA') {
+        if (e.key === 'ArrowRight') { if (currentFrame < frames.length - 1) currentFrame++; updateDisplay(); }
+        if (e.key === 'ArrowLeft') { if (currentFrame > 0) currentFrame--; updateDisplay(); }
+        if (e.key === ' ') { e.preventDefault(); if (playing) { clearInterval(interval); playing=false; } else { document.getElementById('play').click(); } }
+      }
+    });
+
+    // Initial display
+    updateDisplay();
+  </script>
+</body>
+  </html>
